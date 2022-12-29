@@ -1,5 +1,5 @@
 const ImageMinimizerPlugin = require("image-minimizer-webpack-plugin");
-const ManifestPlugin = require("./ManifestPlugin.js");
+const Config = require("./Config.js");
 
 class ImageMinimizer {
   name() {
@@ -7,96 +7,57 @@ class ImageMinimizer {
   }
 
   dependencies() {
-    return ["copy-webpack-plugin", "image-minimizer-webpack-plugin"];
+    return ["image-minimizer-webpack-plugin"];
   }
 
   register(options = {}) {
-    this.implementation = options.implementation || "squoosh";
-    this.patterns = options.patterns || [
-      {
-        from: "**/*",
-        to: "images",
-        context: "resources/images",
-      },
-    ];
+    this.config = new Config;
+    this.implementation = options.implementation || this.config.defaultImplementation();
+    this.patterns = options.patterns || this.config.defaultPatterns();
     this.copyOptions = Object.assign(
       { patterns: this.patterns },
-      options.copyOptions || {}
+      options.copyOptions || this.config.defaultCopyOptions()
     );
-    this.webp = options.webp || false;
-    this.webpOptions =
-      options.webpOptions ||
-      (this.implementation === "squoosh"
-        ? {
-            encodeOptions: {
-              webp: {
-                quality: 90,
-              },
-            },
-          }
-        : {
-            plugins: ["imagemin-webp"],
-          });
-    this.options =
-      options.options ||
-      (this.implementation === "squoosh"
-        ? undefined
-        : {
-            plugins: [
-              "imagemin-gifsicle",
-              "imagemin-mozjpeg",
-              "imagemin-pngquant",
-              "imagemin-svgo",
-            ],
-          });
+    this.webp = options.webp || this.config.defaultWebp();
+    this.webpOptions = options.webpOptions || this.config.defaultWebpOptions(this.implementation)
+    this.options = options.options || this.config.defaultOptions(this.implementation);
   }
 
   webpackConfig(webpackConfig) {
-    webpackConfig.optimization.minimizer =
-      webpackConfig.optimization.minimizer || [];
+    webpackConfig.optimization.minimizer = webpackConfig.optimization.minimizer || [];
     webpackConfig.optimization.minimizer.push(
       new ImageMinimizerPlugin({
-        deleteOriginalAssets: false,
-        minimizer: {
-          implementation:
-            this.implementation === "squoosh"
-              ? ImageMinimizerPlugin.squooshMinify
-              : ImageMinimizerPlugin.imageminMinify,
-          options: this.options,
+        deleteOriginalAssets: true,
+        loader: true,
+        minimizer: [{
+          implementation: ImageMinimizerPlugin.squooshMinify,
+          options: {
+            quant: {
+              enabled: true,
+              numColors: 255,
+              dither: 1.0
+            },
+            encodeOptions: {
+              oxipng: { level: 2 }
+            }
+          },
+          filter: (source, sourcePath) => {
+            return sourcePath.endsWith('.png');
+          }
         },
-        generator: this.webp
-          ? [
-              {
-                type: "asset",
-                filename: "[path][name][ext]",
-                implementation:
-                  this.implementation === "squoosh"
-                    ? ImageMinimizerPlugin.squooshGenerate
-                    : ImageMinimizerPlugin.imageminGenerate,
-                options: this.webpOptions,
-                filter: (source, sourcePath) => {
-                  if (
-                    sourcePath.endsWith(".svg") ||
-                    sourcePath.endsWith(".webp") ||
-                    sourcePath.endsWith(".avif")
-                  ) {
-                    return false;
-                  }
-
-                  return true;
-                },
-              },
-            ]
-          : undefined,
+        {
+          implementation: ImageMinimizerPlugin.squooshMinify,
+          options: {
+            encodeOptions: {
+              mozjpeg: 'auto',
+            }
+          },
+          filter: (source, sourcePath) => {
+            return sourcePath.endsWith('.jpg');
+          }
+        }]
       })
     );
-  }
-
-  webpackPlugins() {
-    const CopyWebpackPlugin = require("copy-webpack-plugin");
-    let { patterns, copyOptions } = this;
-
-    return [new CopyWebpackPlugin(copyOptions), new ManifestPlugin(patterns)];
   }
 }
 

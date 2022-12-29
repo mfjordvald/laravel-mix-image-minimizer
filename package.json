@@ -1,7 +1,8 @@
 {
-  "name": "@chiiya/laravel-mix-image-minimizer",
-  "version": "0.3.0",
-  "author": "Elisha Witte <github@chiiya.moe>",
+  "name": "@mfjordvald/laravel-mix-image-minimizer",
+  "version": "0.1.0",
+  "author": "Martin Fjordvald <martin@evilgeniusmedia.org>",
+  "contributors": ["Elisha Witte <github@chiiya.moe>"],
   "license": "MIT",
   "description": "ImageMinimizerWebpackPlugin for Laravel Mix",
   "main": "index.js",
@@ -19,20 +20,17 @@
     "minimizer",
     "squoosh"
   ],
-  "repository": "https://github.com/chiiya/laravel-mix-image-minimizer",
+  "repository": "https://github.com/martinfjordvald/laravel-mix-image-minimizer",
   "bugs": {
-    "url": "https://github.com/chiiya/laravel-mix-image-minimizer/issues"
+    "url": "https://github.com/martinfjordvald/laravel-mix-image-minimizer/issues"
   },
   "devDependencies": {
-    "laravel-mix": "^6.0.0",
-    "prettier": "2.6.1"
+    "prettier": "^2.6.1"
   },
   "peerDependencies": {
     "laravel-mix": "^6.0.0"
   },
   "dependencies": {
-    "copy-webpack-plugin": "^10.2.4",
-    "image-minimizer-webpack-plugin": "^3.2.3",
-    "multimatch": "^5.0.0"
+    "image-minimizer-webpack-plugin": "^3.8"
   }
 }
